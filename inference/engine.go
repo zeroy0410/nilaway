@@ -27,33 +27,31 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// conflictHandler defines the interface that handles the conflicts encountered during inference.
-// This makes the inference engine independent of the diagnostic generation logic.
+// conflictHandler 定义了一个接口，用于处理推断过程中遇到的冲突。
+// 这使得推断引擎与诊断生成逻辑相互独立。
 type conflictHandler interface {
+	// 添加单个断言冲突
 	AddSingleAssertionConflict(trigger annotation.FullTrigger)
+	// 添加过度约束冲突
 	AddOverconstraintConflict(nilExplanation, nonnilExplanation ExplainedBool)
 }
 
-// Engine is the structure responsible for running the inference: it contains methods to run
-// various tasks for the inference and stores an internal map that can be obtained by calling
-// Engine.InferredMap.
+// Engine 是负责运行推断的结构体：它包含运行推断各种任务的方法，并存储一个内部映射，
+// 可以通过调用 Engine.InferredMap 方法获得。
 type Engine struct {
 	pass *analysis.Pass
-	// inferredMap is the internal inferred map that the engine writes to, it is initialized on the
-	// construction of the engine and populated by the "Observe*" methods of the engine. Users
-	// should use the Engine.InferredMap() method to obtain the current inferred map.
+	// inferredMap 是引擎写入的内部推断映射，它在引擎构造时初始化，并由引擎的 "Observe*" 方法填充。
+	// 用户应该使用 Engine.InferredMap() 方法来获取当前的推断映射。
 	inferredMap *InferredMap
-	// diagnosticEngine receives all encountered conflicts during inference and eventually
-	// generates proper diagnostics from those conflicts.
+	// diagnosticEngine 在推断过程中接收所有遇到的冲突，并最终从这些冲突生成适当的诊断信息。
 	diagnosticEngine conflictHandler
-	// primitive is the primitivizer that is able to convert full triggers and annotation sites to
-	// their primitive forms (see primitive.go).
+	// primitive 是一个原始化器，能够将完整的触发器和注释位置转换为它们的原始形式（参见 primitive.go）。
 	primitive *primitivizer
-	// controlledTriggersBySite stores the set of controlled triggers for each site if the site
-	// controls any triggers. This field is for internal use in the struct only and should not be
-	// accessed elsewhere.
+	// controlledTriggersBySite 存储了每个位置控制的触发器集合（如果该位置控制任何触发器）。
+	// 这个字段仅供结构体内部使用，不应在其他地方访问。
 	controlledTriggersBySite map[primitiveSite]map[annotation.FullTrigger]bool
 }
+
 
 // NewEngine constructs an inference engine that is ready to run inference.
 func NewEngine(pass *analysis.Pass, diagnosticEngine conflictHandler) *Engine {
@@ -72,13 +70,12 @@ func (e *Engine) InferredMap() *InferredMap {
 	return e.inferredMap
 }
 
-// ObserveUpstream imports all information from upstream dependencies. Specifically, it iterates
-// over the direct imports of the passed pass's package, using the Facts mechanism to observe any
-// InferredMap's that were computed by multi-package inference for that imported package.
-// We copy the information not just into Mapping, but also into UpstreamMapping.
-// As more information is observed through a call to ObservePackage, it will be
-// added to Mapping but not UpstreamMapping, then, on a call to Export, only the information
-// present in Mapping but not UpstreamMapping is exported to ensure minimization of output.
+// ObserveUpstream 导入所有来自上游依赖的信息。具体来说，它遍历传入的 pass 包的直接导入包，
+// 使用 Facts 机制观察任何通过多包推断计算得出的 InferredMap。
+// 我们不仅将信息复制到 Mapping 中，还复制到 UpstreamMapping 中。
+// 随着通过调用 ObservePackage 观察到更多信息，这些信息将被添加到 Mapping 中，但不会添加到 UpstreamMapping 中，
+// 然后，在调用 Export 时，只会导出存在于 Mapping 中但不存在于 UpstreamMapping 中的信息，以确保输出最小化。
+
 func (e *Engine) ObserveUpstream() {
 	var facts []analysis.PackageFact
 	for _, packageFact := range e.pass.AllPackageFacts() {

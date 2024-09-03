@@ -25,17 +25,13 @@ import (
 	"golang.org/x/tools/go/types/objectpath"
 )
 
-// A primitiveFullTrigger is a reduced version of an annotation.FullTrigger that can embedded into an
-// InferredMap for importation/exportation via the Facts mechanism. This reduction step must
-// be performed because FullTriggers themselves contain `types.Object`s, which have no exported fields
-// and thus cannot be present in Facts-communicated data structures. PrimitiveFullTriggers encode
-// only that information that will be relevant for formatting error messages: a prestring
-// representation  of their production, a prestring representation of their consumption, and the
-// position in the source.
-// See annotation.Prestring for more info, but in short prestrings are structs that store some
-// minimal information that will vary between string representations meant to be passed with the
-// static type information necessary to format that minimal information into a full string
-// representation without needing to encode it all when using Gob encodings through the Facts mechanism
+// primitiveFullTrigger 是 annotation.FullTrigger 的简化版本，可以嵌入到 InferredMap 中，
+// 通过 Facts 机制进行导入/导出。必须执行这个简化步骤，因为 FullTriggers 本身包含 `types.Object`，
+// 这些对象没有导出的字段，因此不能出现在通过 Facts 进行通信的数据结构中。
+// primitiveFullTriggers 仅编码在格式化错误消息时相关的信息：
+// 它们的生产部分的 prestring 表示、消费部分的 prestring 表示以及在源代码中的位置。
+// 参见 annotation.Prestring 了解更多信息，简而言之，prestrings 是一些结构体，存储一些最小的信息，
+// 这些信息在使用静态类型信息格式化成完整字符串表示时会有所不同，而不需要在使用 Gob 编码通过 Facts 机制传递时全部编码。
 type primitiveFullTrigger struct {
 	Position     token.Position
 	ProducerRepr annotation.Prestring
